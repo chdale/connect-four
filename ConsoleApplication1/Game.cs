@@ -7,7 +7,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 
-namespace ConsoleApplication1
+namespace Connect4
 {
     public delegate void ServerSentMoveHandler(int column);
     public delegate void GameOverHandler();
@@ -15,7 +15,7 @@ namespace ConsoleApplication1
     class Game
     {
         private static event ServerSentMoveHandler RecievedMove;
-        private static event GameOverHandler GGNoobs;
+        private static event GameOverHandler EndGame;
 
         private static TcpClient tc;
 				static NetworkStream ns;
@@ -23,7 +23,7 @@ namespace ConsoleApplication1
         static StreamWriter sw;
         private static List<Connection_Work> connections;
         private static int ID = 0;
-        static Board state = new Board();
+        static Board boardState = new Board();
 
         private static void incoming() 
         {
@@ -67,21 +67,21 @@ namespace ConsoleApplication1
 
         private static void AiPlayer2(int col)
         {
-            state.Player1Move(col, state);
-            Console.WriteLine(state.toString());
-            if (state.WinnerFound())
+            boardState.Player1Move(col, boardState);
+            Console.WriteLine(boardState.toString());
+            if (boardState.WinnerFound())
             {
                 AnnounceWinner("You win!");
                 //the incoming() will hang because no more inputs will come through
                 return;
             }
 
-            var column = state.AIMoveP2(state);
+            var column = boardState.AIMoveP2(boardState);
             sw.WriteLine(column);
             sw.Flush();
-            state.Player2Move(column, state);
-            Console.WriteLine(state.toString());
-            if (state.WinnerFound())
+            boardState.Player2Move(column, boardState);
+            Console.WriteLine(boardState.toString());
+            if (boardState.WinnerFound())
             {
                 AnnounceWinner("I win");
                 //the incoming() thread will block maybe do an event to break
@@ -97,20 +97,20 @@ namespace ConsoleApplication1
 
         private static void AiPlayer1(int col)
         {
-            state.Player2Move(col, state);
-            Console.WriteLine(state.toString());
-            if (state.WinnerFound())
+            boardState.Player2Move(col, boardState);
+            Console.WriteLine(boardState.toString());
+            if (boardState.WinnerFound())
             {
                 AnnounceWinner("You win!");
                 //the incoming() will hang because no more inputs will come through
                 return;
             }
-            var column = state.AIMoveP1(state);
-            state.Player1Move(column, state);
-            Console.WriteLine(state.toString());
+            var column = boardState.AIMoveP1(boardState);
+            boardState.Player1Move(column, boardState);
+            Console.WriteLine(boardState.toString());
             sw.WriteLine(column);
             sw.Flush();
-            if (state.WinnerFound())
+            if (boardState.WinnerFound())
             {
                 AnnounceWinner("I win");
                 //the incoming() thread will block maybe do an event to break
@@ -127,7 +127,7 @@ namespace ConsoleApplication1
         {
             Console.Out.WriteLine(winner);
 
-            var gameOver = GGNoobs;
+            var gameOver = EndGame;
 
             if (gameOver != null)
             {
@@ -180,10 +180,10 @@ namespace ConsoleApplication1
                     
                     sr = new StreamReader(ns);
                     sw = new StreamWriter(ns);
-                    state.SetRows(int.Parse(row));
-                    state.SetColumns(int.Parse(col));
-                    state.SetWinCondition(int.Parse(win));
-                    state.SetBoard(int.Parse(row), int.Parse(col));
+                    boardState.SetRows(int.Parse(row));
+                    boardState.SetColumns(int.Parse(col));
+                    boardState.SetWinCondition(int.Parse(win));
+                    boardState.SetBoard(int.Parse(row), int.Parse(col));
 
                     sw.WriteLine("The board is: "+row+"x"+col+ " with a win condition of "+win+" pieces in a row");
                     sw.Flush();
@@ -198,8 +198,8 @@ namespace ConsoleApplication1
                         if (turn == "1")
                         {
                             RecievedMove += new ServerSentMoveHandler(AiPlayer1);
-                            int myMove = state.AIMoveP1(state);
-                            state.Player1Move(myMove, state);
+                            int myMove = boardState.AIMoveP1(boardState);
+                            boardState.Player1Move(myMove, boardState);
                             sw.WriteLine(myMove);
                             sw.Flush();
                         }
@@ -207,11 +207,11 @@ namespace ConsoleApplication1
                             RecievedMove += new ServerSentMoveHandler(AiPlayer2);
 
                         //Make first move
-                        state.Player1Move(state.AIMoveP1(state), state);
+                        boardState.Player1Move(boardState.AIMoveP1(boardState), boardState);
                         Thread listen = new Thread(new ThreadStart(incoming));
 
                         //game over close the connection
-                        GGNoobs += new GameOverHandler(listen.Abort);
+                        EndGame += new GameOverHandler(listen.Abort);
 
                         listen.Start();
                     }
@@ -227,11 +227,11 @@ namespace ConsoleApplication1
                     {
                         do
                         {
-                            Console.WriteLine(state.toString());
+                            Console.WriteLine(boardState.toString());
                             Console.WriteLine("Make your move: (0-" + (int.Parse(col) - 1) + ")");
                             input = Console.ReadLine();
-                            state.Player1Move(int.Parse(input), state);
-                            if (state.WinnerFound())
+                            boardState.Player1Move(int.Parse(input), boardState);
+                            if (boardState.WinnerFound())
                             {
                                 victor = "You win!";
                                 input = "QUIT";
@@ -318,18 +318,18 @@ namespace ConsoleApplication1
                     {
                         try
                         {
-                            Board state = new Board(int.Parse(row), int.Parse(col), int.Parse(win));
-                            while (!state.WinnerFound())                                             //Continues while a winner isn't found
+                            boardState = new Board(int.Parse(row), int.Parse(col), int.Parse(win));
+                            while (!boardState.WinnerFound())                                             //Continues while a winner isn't found
                             {
-                                Console.WriteLine(state.toString());
+                                Console.WriteLine(boardState.toString());
                                 if (count % 2 == 0)                                                  //Sets the players turn
                                 {
                                     Console.WriteLine("Player 1's move: Which column would you like to place your piece?");
                                     try
                                     {
                                         move = Console.ReadLine();
-                                        state.Player1Move(int.Parse(move) - 1, state);                //The players move
-                                        if (state.WinnerFound())                                     //If the player makes a winning move then sets the victor string
+                                        boardState.Player1Move(int.Parse(move) - 1, boardState);                //The players move
+                                        if (boardState.WinnerFound())                                     //If the player makes a winning move then sets the victor string
                                         {
                                             victor = "Player 1 wins!";
                                         }
@@ -341,17 +341,17 @@ namespace ConsoleApplication1
                                 }
                                 else
                                 {
-                                    if (count == 1&&state.GetLastMove() == state.GetColumns()/2) {
-                                        state.Player2Move((state.GetColumns()/2)-1,state);
+                                    if (count == 1 && boardState.GetLastMove() == boardState.GetColumns()/2) {
+                                        boardState.Player2Move((boardState.GetColumns()/2)-1,boardState);
                                     }
-                                    else if (count == 1 && state.GetLastMove() != state.GetColumns() / 2)
+                                    else if (count == 1 && boardState.GetLastMove() != boardState.GetColumns() / 2)
                                     {
-                                        state.Player2Move(state.GetColumns() / 2, state);
+                                        boardState.Player2Move(boardState.GetColumns() / 2, boardState);
                                     }
                                     else
                                     {
-                                        state.Player2Move(state.AIMoveP2(state), state);                          // 2nd player AI's move
-                                        if (state.WinnerFound())                        // If the AI wins the move then sets victor string
+                                        boardState.Player2Move(boardState.AIMoveP2(boardState), boardState);                          // 2nd player AI's move
+                                        if (boardState.WinnerFound())                        // If the AI wins the move then sets victor string
                                         {
                                             victor = "Player 2 wins!";
                                         }
@@ -359,7 +359,7 @@ namespace ConsoleApplication1
                                 }
                                 count++;
                             }
-                            Console.WriteLine(state.toString());
+                            Console.WriteLine(boardState.toString());
                             if (victor == "")                                        // After the game is complete it displays the victor
                             {
                                 Console.WriteLine("It's a tie!");
@@ -380,20 +380,20 @@ namespace ConsoleApplication1
                     {
                         try
                         {
-                            Board state = new Board(int.Parse(row), int.Parse(col), int.Parse(win));
-                            while (!state.WinnerFound())                                            //Continues while a winner isn't found
+                            boardState = new Board(int.Parse(row), int.Parse(col), int.Parse(win));
+                            while (!boardState.WinnerFound())                                            //Continues while a winner isn't found
                             {
-                                Console.WriteLine(state.toString());
+                                Console.WriteLine(boardState.toString());
                                 if (count % 2 == 0)                                                 // AI's turn
                                 {
                                     if (count == 0)                                                 //If the it's the first turn, default to the center space
                                     {
-                                        state.Player1Move((state.GetColumns()) / 2, state);
+                                        boardState.Player1Move((boardState.GetColumns()) / 2, boardState);
                                     }
                                     else                                                            //If it's not the first turn
                                     {
-                                        state.Player1Move(state.AIMoveP1(state), state);                                      // The AI makes its move
-                                        if (state.WinnerFound())                                    // If the AI wins, set the victor string
+                                        boardState.Player1Move(boardState.AIMoveP1(boardState), boardState);                                      // The AI makes its move
+                                        if (boardState.WinnerFound())                                    // If the AI wins, set the victor string
                                         {
                                             victor = "Player 1 wins!";
                                         }
@@ -405,8 +405,8 @@ namespace ConsoleApplication1
                                     try
                                     {
                                         move = Console.ReadLine();
-                                        state.Player2Move(int.Parse(move) - 1, state);                // Player's move
-                                        if (state.WinnerFound())                                      // If the player wins set the victor string
+                                        boardState.Player2Move(int.Parse(move) - 1, boardState);                // Player's move
+                                        if (boardState.WinnerFound())                                      // If the player wins set the victor string
                                         {
                                             victor = "Player 2 wins!";
                                         }
@@ -419,7 +419,7 @@ namespace ConsoleApplication1
                                 }
                                 count++;
                             }
-                            Console.WriteLine(state.toString());
+                            Console.WriteLine(boardState.toString());
                             if (victor == "")
                             {
                                 Console.WriteLine("It's a tie!");
@@ -444,18 +444,18 @@ namespace ConsoleApplication1
                 {
                     try
                     {
-                        Board state = new Board(int.Parse(row), int.Parse(col), int.Parse(win));
-                        while (!state.WinnerFound())                               //Continues while a winner has not been found
+                        boardState = new Board(int.Parse(row), int.Parse(col), int.Parse(win));
+                        while (!boardState.WinnerFound())                               //Continues while a winner has not been found
                         {
-                            Console.WriteLine(state.toString());
+                            Console.WriteLine(boardState.toString());
                             if (count % 2 == 0)                                    //1st Player
                             {
                                 Console.WriteLine("Player 1's move: Which column would you like to place your piece?");
                                 try
                                 {
                                     move = Console.ReadLine();
-                                    state.Player1Move(int.Parse(move) - 1, state); // 1st Player's move
-                                    if (state.WinnerFound())
+                                    boardState.Player1Move(int.Parse(move) - 1, boardState); // 1st Player's move
+                                    if (boardState.WinnerFound())
                                     {
                                         victor = "Player 1 wins!";
                                     }
@@ -471,8 +471,8 @@ namespace ConsoleApplication1
                                 try
                                 {
                                     move = Console.ReadLine();
-                                    state.Player2Move(int.Parse(move) - 1, state);   // 2nd Player's move
-                                    if (state.WinnerFound())
+                                    boardState.Player2Move(int.Parse(move) - 1, boardState);   // 2nd Player's move
+                                    if (boardState.WinnerFound())
                                     {
                                         victor = "Player 2 wins!";
                                     }
@@ -484,7 +484,7 @@ namespace ConsoleApplication1
                             }
                             count++;
                         }
-                        Console.WriteLine(state.toString());
+                        Console.WriteLine(boardState.toString());
                         if (victor == "")
                         {
                             Console.WriteLine("It's a tie!");

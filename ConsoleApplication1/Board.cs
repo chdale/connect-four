@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ConsoleApplication1
+namespace Connect4
 {
     class Board 
     {
@@ -359,7 +359,7 @@ namespace ConsoleApplication1
             }
             count = 0;                           // Resets count
 
-            // Checks diagonal from top left to bottom right
+            // Checks diagonal from top left to bottom right for win condition
             if (this.tempCol > this.tempRow)                           
             {
                 diagCol = this.tempCol - this.tempRow;
@@ -389,7 +389,7 @@ namespace ConsoleApplication1
                 diagCol++;
             }
             count = 0;
-            //Checks diagonal from bottom left to top right
+            //Checks diagonal from bottom left to top right for win condition
             if (this.rows-this.tempRow-1>this.tempCol)
             {
                 diagCol = 0;

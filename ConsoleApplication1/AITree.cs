@@ -3,7 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ConsoleApplication1
+/*
+ * AITree class handles possible future moves that will be evaluated for win conditions to determine the best possible future move to make when
+ * the AI decides which move to make
+ */
+namespace Connect4
 {
     class AITree 
     {
