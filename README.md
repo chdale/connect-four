@@ -10,4 +10,11 @@ console that scales with any 2 dimensional values (Standard is 6 rows x 7 column
 To-do
 
 ## Instructions
-To-do
+
+1.) Download the ZIP File
+
+2.) Extract to any location
+
+3.) Open Connect4.sln in Visual Studio
+
+4.) Press F5 to run and follow the prompts
