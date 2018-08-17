@@ -18,3 +18,7 @@ To-do
 3.) Open Connect4.sln in Visual Studio
 
 4.) Press F5 to run and follow the prompts
+
+## Additional notes
+
+Connection_Work.cs file was a file provided by instructor
